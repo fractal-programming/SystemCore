@@ -112,7 +112,7 @@ static const char *tabColors[] =
 #endif
 const size_t cLenWherePad = 68;
 //const size_t cLogEntryBufferSize = 230;
-const size_t cLogEntryBufferSize = 230;
+const size_t cLogEntryBufferSize = 512;
 
 // Example                                                  _ pBufEnd
 //                                                        _/
@@ -244,27 +244,13 @@ static char *blockTimeAbsAdd(char *pBuf, const char *pBufEnd, system_clock::time
 
 	// build time
 	system_clock::duration dur = tLogged.time_since_epoch();
-
-	hours durDays = duration_cast<hours>(dur) / 24;
-	dur -= durDays * 24;
-
-	hours durHours = duration_cast<hours>(dur);
-	dur -= durHours;
-
-	minutes durMinutes = duration_cast<minutes>(dur);
-	dur -= durMinutes;
-
-	seconds durSecs = duration_cast<seconds>(dur);
-	dur -= durSecs;
-
-	milliseconds durMillis = duration_cast<milliseconds>(dur);
-	dur -= durMillis;
+	milliseconds durMillis(duration_cast<milliseconds>(dur).count() % 1000);
 
 	len = snprintf(pBuf, spaceBufLeft(pBuf, pBufEnd),
 					"%s  %02d:%02d:%02d.%03d ",
 					timeBuf,
-					int(durHours.count()), int(durMinutes.count()),
-					int(durSecs.count()), int(durMillis.count()));
+					tTm.tm_hour, tTm.tm_min,
+					tTm.tm_sec, (int)durMillis.count());
 	if (len < 0)
 		return strErr(pBufStart, pBufEnd);
 #if DBG_LOG
