@@ -367,7 +367,7 @@ ssize_t TcpTransfering::read(void *pBuf, size_t lenReq)
 
 	if (!numBytes)
 	{
-		procDbgLog("connection reset by peer");
+		procDbgLog("connection closed by peer (EOF)");
 		disconnect();
 		return -4;
 	}
