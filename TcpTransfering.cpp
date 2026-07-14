@@ -280,8 +280,6 @@ Success TcpTransfering::process()
 
 Success TcpTransfering::shutdown()
 {
-	procDbgLog("shutdown");
-
 	if (mpHostAddr)
 	{
 		free(mpHostAddr);
@@ -490,7 +488,6 @@ void TcpTransfering::disconnect(int err)
 	::close(mSocketFd);
 #endif
 	mSocketFd = INVALID_SOCKET;
-	procDbgLog("closing socket: %d: done", mSocketFd);
 }
 
 Success TcpTransfering::socketOptionsSet()
