@@ -35,8 +35,11 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #endif
-#include "TcpListening.h"
+#if defined(__FreeBSD__)
+#include <netinet/in.h>
+#endif
 
+#include "TcpListening.h"
 /* Following include because of
  * - wsaInit() on Windows
  * - sockaddrInfoGet()

@@ -37,6 +37,9 @@
 #include <arpa/inet.h>
 #include <poll.h>
 #endif
+#if defined(__FreeBSD__)
+#include <netinet/in.h>
+#endif
 
 #include "TcpTransfering.h"
 
