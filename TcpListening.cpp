@@ -61,8 +61,10 @@ dProcessStateStr(ProcState);
 
 using namespace std;
 
+#if !defined(_WIN32)
 #if CONFIG_PROC_HAVE_DRIVERS
 mutex TcpListening::mtxStrerror;
+#endif
 #endif
 
 #define dCntSkipMax 30
@@ -414,10 +416,17 @@ int TcpListening::errGet()
 
 string TcpListening::errnoToStr(int num)
 {
+#if defined(_WIN32)
+	char buf[64];
+	errno_t numErr = ::strerror_s(buf, sizeof(buf), num);
+	(void)numErr;
+	return string(buf);
+#else
 #if CONFIG_PROC_HAVE_DRIVERS
 	Guard lock(mtxStrerror);
 #endif
 	return string(::strerror(num));
+#endif
 }
 
 bool TcpListening::fileNonBlockingSet(SOCKET fd)

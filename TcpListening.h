@@ -159,8 +159,10 @@ private:
 	// statistics
 	uint32_t mConnCreated;
 
+#if !defined(_WIN32)
 #if CONFIG_PROC_HAVE_DRIVERS
 	static std::mutex mtxStrerror;
+#endif
 #endif
 };
 

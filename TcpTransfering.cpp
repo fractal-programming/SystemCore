@@ -74,8 +74,11 @@ mutex TcpTransfering::mtxGlobalInit;
 #endif
 bool TcpTransfering::globalInitDone = false;
 #endif
+
+#if !defined(_WIN32)
 #if CONFIG_PROC_HAVE_DRIVERS
 mutex TcpTransfering::mtxStrerror;
+#endif
 #endif
 
 #define dTmoDefaultConnDoneMs			2000
@@ -683,10 +686,17 @@ int TcpTransfering::errGet()
 
 string TcpTransfering::errnoToStr(int num)
 {
+#if defined(_WIN32)
+	char buf[64];
+	errno_t numErr = ::strerror_s(buf, sizeof(buf), num);
+	(void)numErr;
+	return string(buf);
+#else
 #if CONFIG_PROC_HAVE_DRIVERS
 	Guard lock(mtxStrerror);
 #endif
 	return string(::strerror(num));
+#endif
 }
 
 void TcpTransfering::processInfo(char *pBuf, char *pBufEnd)
