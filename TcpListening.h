@@ -161,6 +161,10 @@ private:
 
 	// statistics
 	uint32_t mConnCreated;
+
+#if CONFIG_PROC_HAVE_DRIVERS
+	static std::mutex mtxStrerror;
+#endif
 };
 
 #endif

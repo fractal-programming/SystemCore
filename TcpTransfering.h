@@ -218,6 +218,9 @@ private:
 #endif
 	static bool globalInitDone;
 #endif
+#if CONFIG_PROC_HAVE_DRIVERS
+	static std::mutex mtxStrerror;
+#endif
 
 	/* constants */
 
