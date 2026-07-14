@@ -113,8 +113,10 @@ private:
 		, mpHostAddr(NULL)
 		, mErrno(0)
 		, mInfoSet(false)
+#if CONFIG_PROC_IPV6_ENABLED
 		, mIsIPv6Local(false)
 		, mIsIPv6Remote(false)
+#endif
 		, mBytesReceived(0)
 		, mBytesSent(0)
 	{
@@ -133,8 +135,10 @@ private:
 		, mpHostAddr(NULL)
 		, mErrno(0)
 		, mInfoSet(false)
+#if CONFIG_PROC_IPV6_ENABLED
 		, mIsIPv6Local(false)
 		, mIsIPv6Remote(false)
+#endif
 		, mBytesReceived(0)
 		, mBytesSent(0)
 	{
@@ -150,8 +154,10 @@ private:
 		mpHostAddr = NULL;
 		mErrno = 0;
 		mInfoSet = false;
+#if CONFIG_PROC_IPV6_ENABLED
 		mIsIPv6Local = false;
 		mIsIPv6Remote = false;
+#endif
 		mBytesReceived = 0;
 		mBytesSent = 0;
 
@@ -191,8 +197,10 @@ private:
 	struct sockaddr_storage *mpHostAddr;
 	int mErrno;
 	bool mInfoSet;
+#if CONFIG_PROC_IPV6_ENABLED
 	bool mIsIPv6Local;
 	bool mIsIPv6Remote;
+#endif
 
 	// statistics
 	size_t mBytesReceived;

@@ -100,9 +100,13 @@ private:
 		, mInterrupted(false)
 		, mCntSkip(0)
 		, mFdLstIPv4(INVALID_SOCKET)
+#if CONFIG_PROC_IPV6_ENABLED
 		, mFdLstIPv6(INVALID_SOCKET)
+#endif
 		, mAddrIPv4("")
+#if CONFIG_PROC_IPV6_ENABLED
 		, mAddrIPv6("")
+#endif
 		, mConnCreated(0)
 	{
 		mState = 0;
@@ -115,9 +119,13 @@ private:
 		mInterrupted = false;
 		mCntSkip = 0;
 		mFdLstIPv4 = INVALID_SOCKET;
+#if CONFIG_PROC_IPV6_ENABLED
 		mFdLstIPv6 = INVALID_SOCKET;
+#endif
 		mAddrIPv4 = "";
+#if CONFIG_PROC_IPV6_ENABLED
 		mAddrIPv6 = "";
+#endif
 		mConnCreated = 0;
 
 		mState = 0;
@@ -144,10 +152,14 @@ private:
 	uint32_t mCntSkip;
 
 	SOCKET mFdLstIPv4;
+#if CONFIG_PROC_IPV6_ENABLED
 	SOCKET mFdLstIPv6;
+#endif
 	std::string mAddress;
 	std::string mAddrIPv4;
+#if CONFIG_PROC_IPV6_ENABLED
 	std::string mAddrIPv6;
+#endif
 
 	// statistics
 	uint32_t mConnCreated;

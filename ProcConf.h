@@ -111,5 +111,9 @@
 #endif
 #endif
 
+#ifndef CONFIG_PROC_IPV6_ENABLED
+#define CONFIG_PROC_IPV6_ENABLED				1
+#endif
+
 #endif
 

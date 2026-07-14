@@ -87,8 +87,10 @@ TcpTransfering::TcpTransfering(SOCKET fd)
 	, mpHostAddr(NULL)
 	, mErrno(0)
 	, mInfoSet(false)
+#if CONFIG_PROC_IPV6_ENABLED
 	, mIsIPv6Local(false)
 	, mIsIPv6Remote(false)
+#endif
 	, mBytesReceived(0)
 	, mBytesSent(0)
 {
@@ -113,8 +115,10 @@ TcpTransfering::TcpTransfering(const string &hostAddr, uint16_t hostPort)
 	, mpHostAddr(NULL)
 	, mErrno(0)
 	, mInfoSet(false)
+#if CONFIG_PROC_IPV6_ENABLED
 	, mIsIPv6Local(false)
 	, mIsIPv6Remote(false)
+#endif
 	, mBytesReceived(0)
 	, mBytesSent(0)
 {
@@ -587,7 +591,12 @@ void TcpTransfering::addrInfoSet()
 	socklen_t addrLen;
 	int res;
 	bool ok;
-
+#if CONFIG_PROC_IPV6_ENABLED
+	bool &isIPv6Local = mIsIPv6Local;
+	bool &isIPv6Remote = mIsIPv6Remote;
+#else
+	bool isIPv6Local, isIPv6Remote;
+#endif
 	memset(&addr, 0, sizeof(addr));
 	addrLen = sizeof(addr);
 
@@ -599,7 +608,7 @@ void TcpTransfering::addrInfoSet()
 	if (res == -1)
 		return;
 #endif
-	ok = sockaddrInfoGet(addr, mAddrLocal, mPortLocal, mIsIPv6Local);
+	ok = sockaddrInfoGet(addr, mAddrLocal, mPortLocal, isIPv6Local);
 	if (!ok)
 		return;
 
@@ -616,7 +625,7 @@ void TcpTransfering::addrInfoSet()
 	if (res == -1)
 		return;
 #endif
-	ok = sockaddrInfoGet(addr, mAddrRemote, mPortRemote, mIsIPv6Remote);
+	ok = sockaddrInfoGet(addr, mAddrRemote, mPortRemote, isIPv6Remote);
 	if (!ok)
 		return;
 
@@ -632,19 +641,22 @@ struct sockaddr_storage *TcpTransfering::addrStringToSock(const string &strAddr,
 		return NULL;
 
 	struct sockaddr_in *pAddr4 = (struct sockaddr_in *)pAddr;
+#if CONFIG_PROC_IPV6_ENABLED
 	struct sockaddr_in6 *pAddr6 = (struct sockaddr_in6 *)pAddr;
-
+#endif
 	if (inet_pton(AF_INET, strAddr.c_str(), &pAddr4->sin_addr) == 1)
 	{
 		pAddr4->sin_family = AF_INET;
 		pAddr4->sin_port = htons(numPort);
 	}
+#if CONFIG_PROC_IPV6_ENABLED
 	else
 	if (inet_pton(AF_INET6, strAddr.c_str(), &pAddr6->sin6_addr) == 1)
 	{
 		pAddr6->sin6_family = AF_INET6;
 		pAddr6->sin6_port = htons(numPort);
 	}
+#endif
 	else
 	{
 		free(pAddr);
@@ -697,20 +709,27 @@ void TcpTransfering::processInfo(char *pBuf, char *pBufEnd)
 	if (!mInfoSet)
 		return;
 
+#if CONFIG_PROC_IPV6_ENABLED
 	dInfo("%s%s%s:%d <--> ",
 		mIsIPv6Local ? "[" : "",
 		mAddrLocal.c_str(),
 		mIsIPv6Local ? "]" : "",
 		mPortLocal);
-
+#else
+	dInfo("%s:%d <--> ", mAddrLocal.c_str(), mPortLocal);
+#endif
 	if (mAddrLocal.size() > INET_ADDRSTRLEN)
 		dInfo("\n");
 
+#if CONFIG_PROC_IPV6_ENABLED
 	dInfo("%s%s%s:%d\n",
 		mIsIPv6Remote ? "[" : "",
 		mAddrRemote.c_str(),
 		mIsIPv6Remote ? "]" : "",
 		mPortRemote);
+#else
+	dInfo("%s:%d\n", mAddrRemote.c_str(), mPortRemote);
+#endif
 }
 
 /* static functions */
@@ -720,7 +739,11 @@ bool TcpTransfering::sockaddrInfoGet(struct sockaddr_storage &addr,
 								uint16_t &numPort,
 								bool &isIPv6)
 {
+#if CONFIG_PROC_IPV6_ENABLED
 	char buf[INET6_ADDRSTRLEN];
+#else
+	char buf[INET_ADDRSTRLEN];
+#endif
 	const char *pRes = NULL;
 
 	if (addr.ss_family == AF_INET)
@@ -732,6 +755,7 @@ bool TcpTransfering::sockaddrInfoGet(struct sockaddr_storage &addr,
 
 		pRes = ::inet_ntop(AF_INET, &pAddr->sin_addr, buf, sizeof(buf));
 	}
+#if CONFIG_PROC_IPV6_ENABLED
 	else if (addr.ss_family == AF_INET6)
 	{
 		struct sockaddr_in6 *pAddr = (struct sockaddr_in6 *)&addr;
@@ -741,6 +765,7 @@ bool TcpTransfering::sockaddrInfoGet(struct sockaddr_storage &addr,
 
 		pRes = ::inet_ntop(AF_INET6, &pAddr->sin6_addr, buf, sizeof(buf));
 	}
+#endif
 
 	if (!pRes)
 		return false;
