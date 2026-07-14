@@ -31,6 +31,7 @@
 #include <string.h>
 #ifndef _WIN32
 #include <unistd.h>
+#include <sys/ioctl.h>
 #endif
 #include "TcpListening.h"
 
@@ -424,13 +425,9 @@ bool TcpListening::fileNonBlockingSet(SOCKET fd)
 	if (opt == SOCKET_ERROR)
 		return false;
 #else
-	opt = fcntl(fd, F_GETFL, 0);
-	if (opt == -1)
-		return false;
+	int nonBlockMode = 1;
 
-	opt |= O_NONBLOCK;
-
-	opt = fcntl(fd, F_SETFL, opt);
+	opt = ::ioctl(fd, FIONBIO, &nonBlockMode);
 	if (opt == -1)
 		return false;
 #endif
