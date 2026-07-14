@@ -48,9 +48,6 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <windows.h>
-#else
-#include <sys/socket.h>
-#include <arpa/inet.h>
 #endif
 
 #include "Processing.h"

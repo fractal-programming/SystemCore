@@ -32,7 +32,7 @@
 #include <chrono>
 #ifndef _WIN32
 #include <unistd.h>
-#include <sys/poll.h>
+#include <poll.h>
 #endif
 
 #include "TcpTransfering.h"
