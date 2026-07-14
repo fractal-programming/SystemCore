@@ -31,6 +31,9 @@
 #include <string.h>
 #ifndef _WIN32
 #include <unistd.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
 #endif
 #include "TcpListening.h"
 
@@ -55,6 +58,10 @@ dProcessStateStr(ProcState);
 
 using namespace std;
 
+#if CONFIG_PROC_HAVE_DRIVERS
+mutex TcpListening::mtxStrerror;
+#endif
+
 #define dCntSkipMax 30
 
 TcpListening::TcpListening()
@@ -65,9 +72,13 @@ TcpListening::TcpListening()
 	, mInterrupted(false)
 	, mCntSkip(0)
 	, mFdLstIPv4(INVALID_SOCKET)
+#if CONFIG_PROC_IPV6_ENABLED
 	, mFdLstIPv6(INVALID_SOCKET)
+#endif
 	, mAddrIPv4("")
+#if CONFIG_PROC_IPV6_ENABLED
 	, mAddrIPv6("")
+#endif
 	, mConnCreated(0)
 {
 	mState = StStart;
@@ -125,13 +136,14 @@ Success TcpListening::process()
 		if (success != Positive)
 			return procErrLog(-1, "could not create IPv4 socket");
 
+#if CONFIG_PROC_IPV6_ENABLED
 		success = socketCreate(true, mFdLstIPv6, mAddrIPv6);
 		if (success != Positive)
 		{
 			procDbgLog("could not create IPv6 socket");
 			socketClose(mFdLstIPv6);
 		}
-
+#endif
 		//procDbgLog("creating listening sockets: done");
 
 		mState = StMain;
@@ -154,6 +166,7 @@ Success TcpListening::process()
 		if (success != Pending)
 			return success;
 
+#if CONFIG_PROC_IPV6_ENABLED
 		while (1)
 		{
 			success = connectionsAccept(mFdLstIPv6);
@@ -163,7 +176,7 @@ Success TcpListening::process()
 
 		if (success != Pending)
 			return success;
-
+#endif
 		if (mInterrupted)
 			return Positive;
 
@@ -199,8 +212,11 @@ Success TcpListening::socketCreate(bool isIPv6, SOCKET &fdLst, string &strAddr)
 
 	memset(&addr, 0, sizeof(addr));
 
+#if CONFIG_PROC_IPV6_ENABLED
 	addr.ss_family = isIPv6 ? AF_INET6 : AF_INET;
-
+#else
+	addr.ss_family = AF_INET;
+#endif
 	if (addr.ss_family == AF_INET)
 	{
 		struct sockaddr_in *pAddr4 = (struct sockaddr_in *)&addr;
@@ -209,6 +225,7 @@ Success TcpListening::socketCreate(bool isIPv6, SOCKET &fdLst, string &strAddr)
 		pAddr4->sin_addr.s_addr = mLocalOnly ?
 					htonl(INADDR_LOOPBACK) : htonl(INADDR_ANY);
 	}
+#if CONFIG_PROC_IPV6_ENABLED
 	else
 	if (addr.ss_family == AF_INET6)
 	{
@@ -220,6 +237,7 @@ Success TcpListening::socketCreate(bool isIPv6, SOCKET &fdLst, string &strAddr)
 		if (mLocalOnly)
 			pAddr6->sin6_addr.s6_addr[15] = 1; // ::1
 	}
+#endif
 	else
 		return procErrLog(-1, "unknown address family");
 
@@ -239,13 +257,14 @@ Success TcpListening::socketCreate(bool isIPv6, SOCKET &fdLst, string &strAddr)
 	if (fdLst == INVALID_SOCKET)
 		return procErrLog(-1, "socket() failed: %s", errnoToStr(errGet()).c_str());
 
+#if CONFIG_PROC_IPV6_ENABLED
 	if (addr.ss_family == AF_INET6)
 	{
 		opt = 1;
 		if (::setsockopt(fdLst, IPPROTO_IPV6, IPV6_V6ONLY, (const char *)&opt, sizeof(opt)))
 			return procErrLog(-1, "setsockopt(IPV6_V6ONLY) failed: %s", errnoToStr(errGet()).c_str());
 	}
-
+#endif
 	opt = 1;
 	if (::setsockopt(fdLst, SOL_SOCKET, SO_REUSEADDR, (const char *)&opt, sizeof(opt)))
 		return procErrLog(-1, "setsockopt(SO_REUSEADDR) failed: %s", errnoToStr(errGet()).c_str());
@@ -261,10 +280,14 @@ Success TcpListening::socketCreate(bool isIPv6, SOCKET &fdLst, string &strAddr)
 	// Literature
 	// - https://stackoverflow.com/questions/73707162/socket-bind-failed-with-invalid-argument-error-for-program-running-on-macos
 	// Thx to Bananabaer!
+#if CONFIG_PROC_IPV6_ENABLED
 	if (addr.ss_family == AF_INET)
 		addrLen = sizeof(sockaddr_in);
 	else
 		addrLen = sizeof(sockaddr_in6);
+#else
+	addrLen = sizeof(sockaddr_in);
+#endif
 	// Important for MacOS: End
 
 	if (::bind(fdLst, (struct sockaddr *)&addr, addrLen) < 0)
@@ -356,8 +379,9 @@ Success TcpListening::shutdown()
 		socketClose(peerFd.particle);
 
 	socketClose(mFdLstIPv4);
+#if CONFIG_PROC_IPV6_ENABLED
 	socketClose(mFdLstIPv6);
-
+#endif
 	return Positive;
 }
 
@@ -387,28 +411,10 @@ int TcpListening::errGet()
 
 string TcpListening::errnoToStr(int num)
 {
-	char buf[64];
-	size_t len = sizeof(buf) - 1;
-	char *pBuf;
-
-	buf[0] = 0;
-	buf[len] = 0;
-
-#if defined(_WIN32)
-	pBuf = buf;
-	errno_t numErr = ::strerror_s(buf, len, num);
-	(void)numErr;
-#elif defined(__FreeBSD__) || defined(__APPLE__)
-	int res;
-
-	pBuf = buf;
-	res = ::strerror_r(num, buf, len);
-	if (res)
-		*pBuf = 0;
-#else
-	pBuf = ::strerror_r(num, buf, len);
+#if CONFIG_PROC_HAVE_DRIVERS
+	Guard lock(mtxStrerror);
 #endif
-	return string(pBuf);
+	return string(::strerror(num));
 }
 
 bool TcpListening::fileNonBlockingSet(SOCKET fd)
@@ -421,13 +427,9 @@ bool TcpListening::fileNonBlockingSet(SOCKET fd)
 	if (opt == SOCKET_ERROR)
 		return false;
 #else
-	opt = fcntl(fd, F_GETFL, 0);
-	if (opt == -1)
-		return false;
+	int nonBlockMode = 1;
 
-	opt |= O_NONBLOCK;
-
-	opt = fcntl(fd, F_SETFL, opt);
+	opt = ::ioctl(fd, FIONBIO, &nonBlockMode);
 	if (opt == -1)
 		return false;
 #endif
@@ -448,14 +450,13 @@ void TcpListening::processInfo(char *pBuf, char *pBufEnd)
 	if (hasIPv4)
 		dInfo("%s:%d", mAddrIPv4.c_str(), mPort);
 
+#if CONFIG_PROC_IPV6_ENABLED
 	if (mAddrIPv6.size())
 	{
-		if (hasIPv4)
-			dInfo(", ");
-
+		if (hasIPv4) dInfo(", ");
 		dInfo("[%s]:%d", mAddrIPv6.c_str(), mPort);
 	}
-
+#endif
 	dInfo("\n");
 
 	dInfo("Connections created\t%d\n", (int)mConnCreated);

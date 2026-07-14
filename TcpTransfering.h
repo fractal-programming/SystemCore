@@ -47,12 +47,9 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <windows.h>
-#else
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <fcntl.h>
 #endif
+
+struct sockaddr_storage;
 
 /* Literature
  * - https://handsonnetworkprogramming.com/articles/differences-windows-winsock-linux-unix-bsd-sockets-compatibility/
@@ -113,8 +110,10 @@ private:
 		, mpHostAddr(NULL)
 		, mErrno(0)
 		, mInfoSet(false)
+#if CONFIG_PROC_IPV6_ENABLED
 		, mIsIPv6Local(false)
 		, mIsIPv6Remote(false)
+#endif
 		, mBytesReceived(0)
 		, mBytesSent(0)
 	{
@@ -133,8 +132,10 @@ private:
 		, mpHostAddr(NULL)
 		, mErrno(0)
 		, mInfoSet(false)
+#if CONFIG_PROC_IPV6_ENABLED
 		, mIsIPv6Local(false)
 		, mIsIPv6Remote(false)
+#endif
 		, mBytesReceived(0)
 		, mBytesSent(0)
 	{
@@ -150,8 +151,10 @@ private:
 		mpHostAddr = NULL;
 		mErrno = 0;
 		mInfoSet = false;
+#if CONFIG_PROC_IPV6_ENABLED
 		mIsIPv6Local = false;
 		mIsIPv6Remote = false;
+#endif
 		mBytesReceived = 0;
 		mBytesSent = 0;
 
@@ -191,8 +194,10 @@ private:
 	struct sockaddr_storage *mpHostAddr;
 	int mErrno;
 	bool mInfoSet;
+#if CONFIG_PROC_IPV6_ENABLED
 	bool mIsIPv6Local;
 	bool mIsIPv6Remote;
+#endif
 
 	// statistics
 	size_t mBytesReceived;
@@ -209,6 +214,9 @@ private:
 	static std::mutex mtxGlobalInit;
 #endif
 	static bool globalInitDone;
+#endif
+#if CONFIG_PROC_HAVE_DRIVERS
+	static std::mutex mtxStrerror;
 #endif
 
 	/* constants */
