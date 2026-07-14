@@ -32,8 +32,10 @@
 #include <chrono>
 #ifndef _WIN32
 #include <unistd.h>
-#include <poll.h>
 #include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <poll.h>
 #endif
 
 #include "TcpTransfering.h"

@@ -32,6 +32,8 @@
 #ifndef _WIN32
 #include <unistd.h>
 #include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
 #endif
 #include "TcpListening.h"
 

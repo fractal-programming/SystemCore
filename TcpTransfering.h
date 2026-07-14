@@ -47,9 +47,9 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <windows.h>
-#else
-#include <arpa/inet.h>
 #endif
+
+struct sockaddr_storage;
 
 /* Literature
  * - https://handsonnetworkprogramming.com/articles/differences-windows-winsock-linux-unix-bsd-sockets-compatibility/
