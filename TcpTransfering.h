@@ -74,9 +74,14 @@ public:
 		return new (std::nothrow) TcpTransfering(fd);
 	}
 
-	static TcpTransfering *create(const std::string &hostAddr, uint16_t hostPort)
+	static TcpTransfering *create(const std::string &hostAddr, uint16_t hostPort, SOCKET *pFd = NULL)
 	{
-		return new (std::nothrow) TcpTransfering(hostAddr, hostPort);
+		TcpTransfering *pTransfering = new (std::nothrow) TcpTransfering(hostAddr, hostPort);
+
+		if (pTransfering && pFd)
+			*pFd = pTransfering->mSocketFd;
+
+		return pTransfering;
 	}
 
 	ssize_t read(void *pBuf, size_t lenReq);

@@ -45,13 +45,10 @@
 
 #define dForEach_ProcState(gen) \
 		gen(StSrvStart) \
-		gen(StSrvArgCheck) \
 		gen(StCltStart) \
-		gen(StCltArgCheck) \
 		gen(StCltConnDoneWait) \
 		gen(StCltConnDone) \
-		gen(StConnMain) \
-		gen(StTmp) \
+		gen(StMain) \
 
 #define dGenProcStateEnum(s) s,
 dProcessStateEnum(ProcState);
@@ -136,6 +133,15 @@ TcpTransfering::TcpTransfering(const string &hostAddr, uint16_t hostPort)
 {
 	mState = StCltStart;
 	mSendReady = false;
+
+	if (mHostAddrStr == "localhost")
+		mHostAddrStr = "127.0.0.1";
+
+	mpHostAddr = addrStringToSock(mHostAddrStr, mHostPort);
+	if (!mpHostAddr)
+		return;
+
+	mSocketFd = ::socket(mpHostAddr->ss_family, SOCK_STREAM, 0);
 }
 
 /*
@@ -163,11 +169,6 @@ Success TcpTransfering::process()
 	{
 	case StSrvStart:
 
-		mState = StSrvArgCheck;
-
-		break;
-	case StSrvArgCheck:
-
 		if (mSocketFd == INVALID_SOCKET)
 			return procErrLog(-1, "socket file descriptor not set");
 
@@ -175,7 +176,7 @@ Success TcpTransfering::process()
 		if (success != Positive)
 			return procErrLog(-1, "could not set socket options");
 
-		mState = StConnMain;
+		mState = StMain;
 
 		break;
 	case StCltStart:
@@ -185,24 +186,12 @@ Success TcpTransfering::process()
 		if (!ok)
 			return procErrLog(-2, "could not init WSA");
 #endif
-		mState = StCltArgCheck;
+		// address and socket were already prepared in the constructor
 
-		break;
-	case StCltArgCheck:
-
-		// create local address structure
-
-		if (mHostAddrStr == "localhost")
-			mHostAddrStr = "127.0.0.1";
-
-		mpHostAddr = addrStringToSock(mHostAddrStr, mHostPort);
 		if (!mpHostAddr)
 			return procErrLog(-1, "could not parse IP address. Given: '%s'",
 					mHostAddrStr.c_str());
 
-		// create and configure socket
-
-		mSocketFd = socket(mpHostAddr->ss_family, SOCK_STREAM, 0);
 		if (mSocketFd == INVALID_SOCKET)
 			return procErrLog(-1, "could not create socket: %s",
 							errnoToStr(errGet()).c_str());
@@ -258,10 +247,10 @@ Success TcpTransfering::process()
 		addrInfoSet();
 		mSendReady = true;
 
-		mState = StConnMain;
+		mState = StMain;
 
 		break;
-	case StConnMain:
+	case StMain:
 
 		if (mDone)
 			return Positive;
@@ -275,9 +264,6 @@ Success TcpTransfering::process()
 							errnoToStr(mErrno).c_str());
 
 		return Positive;
-
-		break;
-	case StTmp:
 
 		break;
 	default:
