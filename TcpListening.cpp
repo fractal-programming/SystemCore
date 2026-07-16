@@ -31,13 +31,13 @@
 #include <string.h>
 #ifndef _WIN32
 #include <unistd.h>
-#include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #endif
 #if defined(__FreeBSD__)
 #include <netinet/in.h>
 #endif
+#include <fcntl.h>
 
 #include "TcpListening.h"
 /* Following include because of
@@ -439,9 +439,13 @@ bool TcpListening::fileNonBlockingSet(SOCKET fd)
 	if (opt == SOCKET_ERROR)
 		return false;
 #else
-	int nonBlockMode = 1;
+	opt = fcntl(fd, F_GETFL, 0);
+	if (opt == -1)
+		return false;
 
-	opt = ::ioctl(fd, FIONBIO, &nonBlockMode);
+	opt |= O_NONBLOCK;
+
+	opt = fcntl(fd, F_SETFL, opt);
 	if (opt == -1)
 		return false;
 #endif
