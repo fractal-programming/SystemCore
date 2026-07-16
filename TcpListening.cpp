@@ -37,7 +37,11 @@
 #if defined(__FreeBSD__)
 #include <netinet/in.h>
 #endif
+#ifndef O_NONBLOCK
+// ifndef because of lwIP on STM32
+// See: https://community.st.com/stm32cubemx-mcus-29/o-nonblock-is-defined-twice-and-does-not-work-with-lwip-29950
 #include <fcntl.h>
+#endif
 
 #include "TcpListening.h"
 /* Following include because of
