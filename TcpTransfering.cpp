@@ -487,9 +487,6 @@ void TcpTransfering::disconnect(int err)
 	::close(mSocketFd);
 #endif
 	mSocketFd = INVALID_SOCKET;
-
-	mReadReady = false;
-	mSendReady = false;
 }
 
 Success TcpTransfering::socketOptionsSet()
