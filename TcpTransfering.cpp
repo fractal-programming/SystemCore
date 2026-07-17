@@ -34,7 +34,6 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
-#include <poll.h>
 #endif
 #if defined(__FreeBSD__)
 #include <netinet/in.h>
@@ -43,6 +42,7 @@
 // ifndef because of lwIP on STM32
 // See: https://community.st.com/stm32cubemx-mcus-29/o-nonblock-is-defined-twice-and-does-not-work-with-lwip-29950
 #include <fcntl.h>
+#include <poll.h>
 #endif
 
 #include "TcpTransfering.h"
