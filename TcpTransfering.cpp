@@ -41,7 +41,7 @@
 // ifndef because of lwIP on STM32
 // See: https://community.st.com/stm32cubemx-mcus-29/o-nonblock-is-defined-twice-and-does-not-work-with-lwip-29950
 #include <fcntl.h>
-#include <sys/poll.h>
+#include <poll.h>
 #endif
 #endif
 
