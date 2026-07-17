@@ -315,12 +315,11 @@ Literature socket programming
 */
 ssize_t TcpTransfering::read(void *pBuf, size_t lenReq)
 {
+	if (!mReadReady)
+		return 0;
 #if CONFIG_PROC_HAVE_DRIVERS
 	Guard lock(mSocketFdMtx);
 #endif
-	if (!mReadReady)
-		return 0;
-
 	if (mSocketFd == INVALID_SOCKET)
 		return -1;
 
@@ -407,7 +406,7 @@ ssize_t TcpTransfering::readFlush()
 ssize_t TcpTransfering::send(const void *pData, size_t lenReq)
 {
 	if (!mSendReady)
-		return procErrLog(-1, "unable to send data. Not ready");
+		return 0;
 #if CONFIG_PROC_HAVE_DRIVERS
 	Guard lock(mSocketFdMtx);
 #endif
